@@ -22,11 +22,11 @@ typedef struct {
 TableEntry symbolTable[MAX_SYMBOLS];
 
 
-char *opCodes[31] = {"ADD", "AND", "BR", "BRP", "BRZ", "BRZP", "BRN", "BRNP", "BRNZ",
-"BRNZP","HALT", "JMP", "JSR", "JSRR", "LDB", "LDW",
-"LEA", "NOP", "NOT", "RET", "LSHF", "RSHFL", "RSHFA", "RTI", "STB", "STW", "TRAP", "XOR", ".FILL", ".ORIG", ".END" };
+char *opCodes[31] = {"add", "and", "br", "brp", "brz", "brzp", "brn", "brnp", "brnz",
+"brnzp","halt", "jmp", "jsr", "jsrr", "ldb", "ldw",
+"lea", "nop", "not", "ret", "lshf", "rshfl", "rshfa", "rti", "stb", "stw", "trap", "xor", ".FILL", ".ORIG", ".END" };
 char *registers[8] = {"r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7"};
-
+int labels = 0;
 int pcounter;
 int isOpcode(char *inst ){
    
@@ -65,13 +65,17 @@ func()
 		}
 	   } while( lRet != DONE );
 	}
-
+int translateLine(char** pOpcode, char** pArg1, char** pArg2, char** pArg3, char** pArg4){
+printf("first word: %s second word: %s third word: %s fourth word: %s fifth word: %s", pOpcode, pArg1, pArg2, pArg3, pArg4 );
+}
 readAndParse( FILE * pInfile, char * pLine, char ** pLabel, char
 	** pOpcode, char ** pArg1, char ** pArg2, char ** pArg3, char ** pArg4
 	)
 	{
+
 	   char * lRet, * lPtr;
 	   int i;
+	   
 	   if( !fgets( pLine, MAX_LINE_LENGTH, pInfile ) )
 		return( DONE );
 	   for( i = 0; i < strlen( pLine ); i++ )
@@ -90,30 +94,42 @@ readAndParse( FILE * pInfile, char * pLine, char ** pLabel, char
 	   *lPtr = '\0';
 	   if( !(lPtr = strtok( pLine, "\t\n ," ) ) ) 
 		return( EMPTY_LINE );
-	   printf("%s\n", lPtr);
+	   //printf("%s\n", lPtr);
 	   if( isOpcode( lPtr ) == -1 && lPtr[0] != '.' ) /* found a label */
 	   {
+		printf("found label\n");
+		printf("%s\n", lPtr);
+		TableEntry newLabel;
+		strcpy(newLabel.label, lPtr);
+		//newLabel.address = "complete"
+		symbolTable[labels] = newLabel;
+		labels++;
+
 		*pLabel = lPtr;
 		if( !( lPtr = strtok( NULL, "\t\n ," ) ) ) return( OK );
+		
+		
 	   }
-	   
+	   if(strcmp(".ORIG",lPtr) == 0){
+		printf("start found\n");
+}
            *pOpcode = lPtr;
 
-	   if( !( lPtr = strtok( NULL, "\t\n ," ) ) ) return( OK );
+	   if( !( lPtr = strtok( NULL, "\t\n ," ) ) )return( OK );
 	   
            *pArg1 = lPtr;
 	   
            if( !( lPtr = strtok( NULL, "\t\n ," ) ) ) return( OK );
 
 	   *pArg2 = lPtr;
-	   if( !( lPtr = strtok( NULL, "\t\n ," ) ) ) return( OK );
+	   if( !( lPtr = strtok( NULL, "\t\n ," ) ) )   return( OK );
 
 	   *pArg3 = lPtr;
 
-	   if( !( lPtr = strtok( NULL, "\t\n ," ) ) ) return( OK );
+	   if( !( lPtr = strtok( NULL, "\t\n ," ) ) )  return( OK );
 
 	   *pArg4 = lPtr;
-
+	   //translateLine( pOpcode, pArg1, pArg2, pArg3, pArg4);
 	   return( OK );
 	}// Defining hash map
 
@@ -166,7 +182,10 @@ argv[1] = inputFile;
 argv[2] = outputFile;
 
 fileOpen(args, argv);
-
+printf("%d\n", labels);
+for(int i = 0; i < labels; i++){
+	printf("%s\n", symbolTable[i].label);
+}
 
 }
 
