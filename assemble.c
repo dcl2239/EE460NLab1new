@@ -22,16 +22,23 @@ typedef struct {
 TableEntry symbolTable[MAX_SYMBOLS];
 
 
-char *opCodes[32] = {"ADD", "AND", "BR", "BRP", "BRZ", "BRZP", "BRN", "BRNP", "BRNZ",
+char *opCodes[31] = {"ADD", "AND", "BR", "BRP", "BRZ", "BRZP", "BRN", "BRNP", "BRNZ",
 "BRNZP","HALT", "JMP", "JSR", "JSRR", "LDB", "LDW",
-"LEA", "NOP", "NOT", "RET", "LSHF", "RSHFL", "RSHFA", "RTI", "STB", "STW", "TRAP", "XOR", };
+"LEA", "NOP", "NOT", "RET", "LSHF", "RSHFL", "RSHFA", "RTI", "STB", "STW", "TRAP", "XOR", ".FILL", ".ORIG", ".END" };
 char *registers[8] = {"r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7"};
 
 int pcounter;
-char* isOpcode(char *ptr){
-		return 'a';
-	}
-enum
+int isOpcode(char *inst ){
+   
+    for(int pair = 0; pair < 31; pair++){
+	//printf("%d\n", pair);
+	//printf("%s\n", opCodes[pair]);
+        if(strcmp(inst, opCodes[pair]) == 0){
+            return 1;   // we have a pair (opcode)
+        }
+    }
+            return -1; // not a pair, not an opcode
+}enum
 	{
 	   DONE, OK, EMPTY_LINE
 	};
@@ -46,7 +53,7 @@ func()
 
 	   FILE * lInfile;
 
-	   lInfile = fopen( "data.in", "r" );	/* open the input file */
+	   lInfile = fopen( "Input.asm", "r" );	/* open the input file */
 
 	   do
 	   {
@@ -59,39 +66,62 @@ func()
 	   } while( lRet != DONE );
 	}
 
-int readAndParse( FILE * pInfile, char * pLine, char ** pLabel, char
-	** pOpcode, char ** pArg1, char ** pArg2, char ** pArg3, char ** pArg4){
-    printf("made it again \n");
-    char * lRet, * lPtr;
+readAndParse( FILE * pInfile, char * pLine, char ** pLabel, char
+	** pOpcode, char ** pArg1, char ** pArg2, char ** pArg3, char ** pArg4
+	)
+	{
+	   char * lRet, * lPtr;
 	   int i;
-    if (isOpcode (lPtr) == -1 && lPtr[0] != '.') // found a label
-    {
-        *pLabel = lPtr;
-        if( !( lPtr = strtok( NULL, "\t\n ,"))) return( OK);
-    }
+	   if( !fgets( pLine, MAX_LINE_LENGTH, pInfile ) )
+		return( DONE );
+	   for( i = 0; i < strlen( pLine ); i++ )
+		pLine[i] = tolower( pLine[i] );
+	   
+           /* convert entire line to lowercase */
+	   *pLabel = *pOpcode = *pArg1 = *pArg2 = *pArg3 = *pArg4 = pLine + strlen(pLine);
 
-    *pOpcode = lPtr;
+	   /* ignore the comments */
+	   lPtr = pLine;
 
-    if ( !( lPtr = strtok( NULL, "\t\n ,"))) return ( OK);
+	   while( *lPtr != ';' && *lPtr != '\0' &&
+	   *lPtr != '\n' ) 
+		lPtr++;
 
-    *pArg1 = lPtr;
-    if ( !( lPtr = strtok( NULL, "\t\n ,"))) return ( OK);
+	   *lPtr = '\0';
+	   if( !(lPtr = strtok( pLine, "\t\n ," ) ) ) 
+		return( EMPTY_LINE );
+	   printf("%s\n", lPtr);
+	   if( isOpcode( lPtr ) == -1 && lPtr[0] != '.' ) /* found a label */
+	   {
+		*pLabel = lPtr;
+		if( !( lPtr = strtok( NULL, "\t\n ," ) ) ) return( OK );
+	   }
+	   
+           *pOpcode = lPtr;
 
-    *pArg2 = lPtr;
-    if ( !( lPtr = strtok( NULL, "\t\n ,"))) return ( OK);
+	   if( !( lPtr = strtok( NULL, "\t\n ," ) ) ) return( OK );
+	   
+           *pArg1 = lPtr;
+	   
+           if( !( lPtr = strtok( NULL, "\t\n ," ) ) ) return( OK );
 
-    *pArg3 = lPtr;
-    if ( !( lPtr = strtok( NULL, "\t\n ,"))) return ( OK);
+	   *pArg2 = lPtr;
+	   if( !( lPtr = strtok( NULL, "\t\n ," ) ) ) return( OK );
 
-    *pArg4 = lPtr;
-    
-    return( OK);
-}
-// Defining hash map
+	   *pArg3 = lPtr;
+
+	   if( !( lPtr = strtok( NULL, "\t\n ," ) ) ) return( OK );
+
+	   *pArg4 = lPtr;
+
+	   return( OK );
+	}// Defining hash map
 
 
 int fileOpen(int argc, char* argv[]) {
-	
+	printf("%s\n", argv[1]);
+	printf("%s\n", argv[2]);
+
      /* open the source file */
      infile = fopen(argv[1], "r");
      outfile = fopen(argv[2], "w");
@@ -132,10 +162,11 @@ char* argv[3];
 int args = 2;
 char* inputFile = "Input.asm";
 char* outputFile = "Output.obj";
-argv[0] = inputFile;
-argv[1] = outputFile;
+argv[1] = inputFile;
+argv[2] = outputFile;
 
 fileOpen(args, argv);
 
 
 }
+
